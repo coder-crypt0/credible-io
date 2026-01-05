@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Credible.io</title>
+</head>
+<body>
+
+<h2>Credible.io – Educational Content Verifier</h2>
+
+<textarea id="inputText" rows="6" cols="60"
+placeholder="Paste educational content here..."></textarea>
+
+<br><br>
+
+<button onclick="verifyText()">Verify Credibility</button>
+
+<h3>Result</h3>
+<p id="result"></p>
+
+<script>
+async function verifyText() {
+    const text = document.getElementById("inputText").value;
+
+    const response = await fetch("http://127.0.0.1:8000/verify", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ content: text })
+    });
+
+    const data = await response.json();
+
+    document.getElementById("result").innerHTML =
+        "Credibility Score: " + data.credibility_score +
+        "<br>Explanation: " + data.explanation;
+}
+</script>
+
+</body>
+</html>
