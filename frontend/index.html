@@ -34,16 +34,25 @@ async function verifyText() {
     let output = `
         <strong>Credibility Score:</strong> ${data.credibility_score}<br>
         <strong>Final Verdict:</strong> ${data.final_verdict}<br><br>
+
         <strong>Flags Detected:</strong>
         <ul>
             ${data.flags_detected.map(f => `<li>${f}</li>`).join("")}
         </ul>
+
         <strong>Explanation:</strong>
         <ul>
             ${data.explanation.map(e => `<li>${e}</li>`).join("")}
         </ul>
     `;
 
+    if (data.verification_suggestion) {
+        output += `
+            <strong>Suggested Next Step:</strong><br>
+            ${data.verification_suggestion}
+        `;
+    }
+    
     document.getElementById("result").innerHTML = output;
 }
 </script>
