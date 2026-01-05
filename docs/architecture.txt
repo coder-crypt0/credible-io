@@ -1,0 +1,13 @@
+User (Browser)
+   |
+   v
+Frontend (HTML + JS)
+   |
+   v
+FastAPI Backend
+   |
+   v
+Credibility Logic + Explainability
+   |
+   v
+Score + Flags + Explanation
