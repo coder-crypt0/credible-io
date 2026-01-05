@@ -28,5 +28,15 @@ Combatting Misinformation in Educational Content (TECHFIESTA’26 – ED002)
 - Database: Firebase
 - Extension: JavaScript (Manifest V3)
 
+## Demo Flow (Hackathon)
+
+1. User pastes educational content into the web interface
+2. System analyzes language patterns and context
+3. Credibility score is generated
+4. Explainable flags and reasoning are shown
+5. User is guided toward verification when needed
+
+This demonstrates real-time, explainable credibility analysis for educational content.
+
 ## License
 This project is licensed under the MIT License.
