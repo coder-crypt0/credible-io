@@ -80,6 +80,7 @@ FastAPI Backend
 ```bash
 pip install fastapi uvicorn
 uvicorn main:app --reload
+```
 
 Backend Runs at: http://127.0.0.1:8000
 Interactive API documentation: http://127.0.0.1:8000/docs
@@ -90,7 +91,8 @@ Interactive API documentation: http://127.0.0.1:8000/docs
 - Browser extension and backend fully integrated
 - Live misinformation repair implemented
 - Future work planned for claim-level fact verification using external sources
-- Hackathon Highlights
+
+## Hackathon Highlights
 - Real-time educational content analysis
 - Explainable AI instead of opaque scoring
 - Ethical, non-destructive misinformation repair
