@@ -140,65 +140,93 @@ def generate_verification_suggestion(flags):
     return "Verify the claim using trusted academic or educational sources."
 
 
+# -----------------------------
+# Helper: Translation
+# -----------------------------
+async def translate_text(text: str, target_lang: str = "English") -> str:
+    """Translates text to target language using Gemini."""
+    prompt = f"Translate the following text to {target_lang}. Return ONLY the translated text, no explanation.\n\nText: {text}"
+    return await get_gemini_response(prompt)
+
+async def detect_language(text: str) -> str:
+    """Detects the language of the text using Gemini."""
+    prompt = f"Detect the language of the following text. Return ONLY the language name (e.g., 'English', 'Hindi', 'Spanish').\n\nText: {text}"
+    return await get_gemini_response(prompt)
+
+
 # =====================================================
 # VERIFY ENDPOINT
 # =====================================================
 @app.post("/verify")
-def verify_text(data: TextInput):
+async def verify_text(data: TextInput):
     """
-    Explainable credibility verification (heuristic MVP).
+    Explainable credibility verification with Multilingual Support.
     """
     try:
-        text = data.content.lower()
-
-        score = 80
-        flags = []
-        reasons = []
-
-        # --- Linguistic risk checks ---
-        if "definitely" in text or "always" in text:
-            score -= 20
-            flags.append("Overconfident language")
-            reasons.append("Uses absolute terms without supporting evidence.")
-
-        if len(text.split()) < 10:
-            score -= 10
-            flags.append("Insufficient context")
-            reasons.append("Text is too short to verify reliably.")
-
-        # --- Source authority boost ---
-        authority_bonus = 0
-
-        if data.source_url:
-            if "wikipedia.org" in data.source_url:
-                authority_bonus = 10
-                reasons.append(
-                    "Source is Wikipedia (community-reviewed reference platform)."
-                )
-            elif ".edu" in data.source_url or ".gov" in data.source_url:
-                authority_bonus = 15
-                reasons.append(
-                    "Source is an educational or government domain."
-                )
-
-        score += authority_bonus
-        score = min(score, 100)
-
-        suggestion = None
-        if score < 70:
-            suggestion = generate_verification_suggestion(flags)
-
-        return {
-            "credibility_score": score,
-            "flags_detected": flags,
-            "explanation": reasons,
-            "final_verdict": (
-                "Likely Reliable" if score >= 70 else "Needs Verification"
-            ),
-            "verification_suggestion": suggestion
+        original_text = data.content
+        
+        # 1. Detect Language
+        detected_lang = await detect_language(original_text)
+        is_english = "english" in detected_lang.lower()
+        
+        # 2. Translate to English if needed (internally)
+        text_to_analyze = original_text
+        if not is_english:
+            text_to_analyze = await translate_text(original_text, "English")
+            
+        # 3. Verify Facts (Using Gemini for trusted analysis)
+        
+        if is_english:
+            prompt = f"""
+            Analyze the credibility of the following educational text.
+            Text: "{original_text}"
+            
+            Provide:
+            1. A credibility score (0-100).
+            2. A list of specific flags (e.g., "Overconfident language", "Lack of citation").
+            3. A list of explanations.
+            4. A final verdict ("Likely Reliable", "Needs Verification", etc.).
+            5. A verification suggestion if the score is low.
+            
+            Output JSON strictly.
+            """
+        else:
+             prompt = f"""
+            Analyze the credibility of the educational text provided below.
+            
+            Original Text ({detected_lang}): "{original_text}"
+            English Translation: "{text_to_analyze}"
+            
+            Tasks:
+            1. Analyze the content for credibility issues, bias, or verification needs based on the English translation.
+            2. Provide a credibility score (0-100).
+            3. Identify specific flags (in English).
+            4. Provide explanations. Each explanation MUST follow this format: 
+               "'[Quote from Original Text in {detected_lang}]' - [Explanation in English]"
+               Example: "'पृथ्वी सपाट आहे' - This claim contradicts scientific evidence."
+            5. Provide a Final Verdict in {detected_lang}, followed by the English verdict in parentheses.
+               Example: "{detected_lang} Verdict (English Verdict)"
+            6. Provide a verification suggestion in English.
+            
+            Output JSON strictly.
+            """
+        
+        json_structure = {
+            "credibility_score": 0,
+            "flags_detected": ["string"],
+            "explanation": ["string"],
+            "final_verdict": "string",
+            "verification_suggestion": "string"
         }
+        
+        analysis_result = await get_gemini_response(prompt, json_structure)
+        
+        # 4. (Step removed) No post-translation needed as prompts handle the formatting directly.
+                
+        return analysis_result
 
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
